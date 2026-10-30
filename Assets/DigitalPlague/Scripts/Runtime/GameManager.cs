@@ -20,6 +20,9 @@ namespace DigitalPlague
 
         [SerializeField] private bool startInMainMenu;
 
+        [SerializeField, Tooltip("Spread balance in simulated seconds. Set before entering Play mode.")]
+        private SpreadSettings spreadSettings = new SpreadSettings();
+
         public event Action<SimulationTick> SimulationTicked;
         public event Action<GameState> StateChanged;
         public event Action WorldChanged;
@@ -46,7 +49,7 @@ namespace DigitalPlague
 
             if (startInMainMenu)
             {
-                World = new WorldSimulation(WorldLocations.Create());
+                World = new WorldSimulation(WorldLocations.Create(), spreadSettings);
                 Regions = World.Definition.Locations;
             }
             else Regions = FictionalRegions.Create();

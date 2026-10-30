@@ -64,6 +64,9 @@ namespace DigitalPlague.Tests
             Submit("fast-button");
             yield return new WaitForSecondsRealtime(.7f);
             Assert.That(manager.Clock.Speed, Is.EqualTo(SimulationSpeed.Fast));
+            // Default network seeding deliberately takes longer than this smoke test.
+            // Drive additional fixed ticks without a long wall-clock wait.
+            manager.Clock.Advance(30);
             Assert.That(manager.World.GetLocation("USA").InfluencedDevices, Is.GreaterThan(0));
             Submit("location-USA");
             yield return null;

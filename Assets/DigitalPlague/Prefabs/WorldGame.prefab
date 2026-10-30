@@ -49,6 +49,14 @@ MonoBehaviour:
   tickDurationSeconds: 1
   startingSpeed: 1
   startInMainMenu: 1
+  spreadSettings:
+    InitialInfluenceFraction: 0.0001
+    NewLocationInfluenceFraction: 0.0001
+    GrowthRatePerSecond: 0.08
+    ConnectivityBaseline: 0.4
+    SecurityResistance: 0.75
+    TransmissionRatePerSecond: 0.04
+    ExposureToSeed: 0.01
 --- !u!114 &2482592202573957666
 MonoBehaviour:
   m_ObjectHideFlags: 0

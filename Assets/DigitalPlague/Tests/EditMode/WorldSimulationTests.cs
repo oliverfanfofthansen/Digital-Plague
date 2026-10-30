@@ -32,7 +32,7 @@ namespace DigitalPlague.Tests
         [Test]
         public void SpreadOnlyCrossesOneConnectionPerTickAndNeverReachesIsolatedNodes()
         {
-            var world = new WorldSimulation(Chain());
+            var world = new WorldSimulation(Chain(), new SpreadSettings { ExposureToSeed = 1e-8 });
             world.Seed("A");
             world.Advance(1);
             Assert.That(world.GetLocation("B").InfluencedDevices, Is.GreaterThan(0));
@@ -62,19 +62,26 @@ namespace DigitalPlague.Tests
                 Is.GreaterThan(lowConnectivity.GetLocation("A").InfluenceFraction));
         }
 
-        [Test]
-        public void FramePartitionAndSpeedProduceIdenticalSimulationForEqualTickCounts()
+        [TestCase(SimulationSpeed.Normal)]
+        [TestCase(SimulationSpeed.Double)]
+        [TestCase(SimulationSpeed.Fast)]
+        public void FramePartitionAndSpeedProduceIdenticalSimulationForEqualTickCounts(SimulationSpeed speed)
         {
             var regular = new WorldSimulation(WorldLocations.Create());
             var accelerated = new WorldSimulation(WorldLocations.Create());
             regular.Seed("IND");
             accelerated.Seed("IND");
             var clockA = new SimulationClock();
-            var clockB = new SimulationClock(initialSpeed: SimulationSpeed.Fast);
+            var clockB = new SimulationClock(initialSpeed: speed);
             clockA.Tick += tick => regular.Advance(tick.DeltaSeconds);
             clockB.Tick += tick => accelerated.Advance(tick.DeltaSeconds);
             for (int frame = 0; frame < 3600; frame++) clockA.Advance(1.0 / 60);
-            foreach (double delta in new[] { 1.0, .5, 5.5, 3.0, 2.0 }) clockB.Advance(delta);
+            clockB.Advance(10.0 / (int)speed);
+            clockB.SetSpeed(SimulationSpeed.Paused);
+            clockB.Advance(100);
+            clockB.SetSpeed(speed);
+            foreach (double delta in new[] { 1.0, .5, 5.5, 3.0, 2.0 })
+                clockB.Advance(delta * 50 / (12 * (int)speed));
             Assert.That(clockA.TickCount, Is.EqualTo(clockB.TickCount));
             foreach (LocationState location in regular.Locations)
                 Assert.That(accelerated.GetLocation(location.Data.Id).InfluencedDevices,
@@ -124,6 +131,76 @@ namespace DigitalPlague.Tests
         public void InvalidGeographyIsRejected(double latitude, double longitude)
         {
             Assert.Throws<ArgumentOutOfRangeException>(() => new GeoCoordinate(latitude, longitude));
+        }
+
+        [Test]
+        public void LogisticGrowthAcceleratesThenSlowsAndMatchesAnalyticalSolution()
+        {
+            var data = new RegionData("A", "Test", 1000000, .6, 0);
+            var world = new WorldSimulation(new WorldDefinition(new[] { data }, new NetworkLink[0]),
+                new SpreadSettings { InitialInfluenceFraction = .001, GrowthRatePerSecond = .1 });
+            world.Seed("A");
+            world.Advance(1);
+            double earlyChange = world.GetLocation("A").InfluenceFraction - .001;
+            world.Advance(Math.Log(999) / .1 - 1);
+            double middle = world.GetLocation("A").InfluenceFraction;
+            Assert.That(middle, Is.EqualTo(.5).Within(1e-12));
+            world.Advance(1);
+            double middleChange = world.GetLocation("A").InfluenceFraction - middle;
+            world.Advance(100);
+            double late = world.GetLocation("A").InfluenceFraction;
+            world.Advance(1);
+            double lateChange = world.GetLocation("A").InfluenceFraction - late;
+            Assert.That(middleChange, Is.GreaterThan(earlyChange * 100));
+            Assert.That(lateChange, Is.LessThan(middleChange / 100));
+            world.Advance(100000);
+            Assert.That(world.GetLocation("A").InfluenceFraction, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void NetworkExposureSeedsTinyInfluenceWithoutBulkTransferOrSameTickChain()
+        {
+            var settings = new SpreadSettings();
+            var world = new WorldSimulation(Chain(), settings);
+            world.Seed("A");
+            Assert.That(world.GetLocation("A").InfluenceFraction, Is.EqualTo(.0001));
+            world.Advance(1);
+            Assert.That(world.GetLocation("B").InfluencedDevices, Is.Zero);
+            int ticks = 1;
+            while (!world.GetLocation("B").IsInfluenced && ticks++ < 1000) world.Advance(1);
+            Assert.That(ticks, Is.LessThan(1000));
+            Assert.That(world.GetLocation("B").InfluenceFraction,
+                Is.EqualTo(settings.NewLocationInfluenceFraction).Within(1e-12));
+            Assert.That(world.GetLocation("C").InfluencedDevices, Is.Zero);
+        }
+
+        [Test]
+        public void ResetDiscardsPendingExposure()
+        {
+            var world = new WorldSimulation(Chain(), new SpreadSettings
+            { GrowthRatePerSecond = 0, ExposureToSeed = .000006 });
+            world.Seed("A");
+            world.Advance(1); // .000003 exposure in B, below the threshold.
+            Assert.That(world.GetLocation("B").InfluencedDevices, Is.Zero);
+            world.Seed("A");
+            world.Advance(1);
+            Assert.That(world.GetLocation("B").InfluencedDevices, Is.Zero);
+        }
+
+        [Test]
+        public void SettingsAreValidatedAndSnapshottedForASession()
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => new WorldSimulation(Chain(),
+                new SpreadSettings { ExposureToSeed = 0 }));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new WorldSimulation(Chain(),
+                new SpreadSettings { GrowthRatePerSecond = double.NaN }));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new WorldSimulation(Chain(),
+                new SpreadSettings { NewLocationInfluenceFraction = 2 }));
+            var settings = new SpreadSettings();
+            var world = new WorldSimulation(Chain(), settings);
+            settings.InitialInfluenceFraction = .8;
+            world.Seed("A");
+            Assert.That(world.GetLocation("A").InfluenceFraction, Is.EqualTo(.0001));
         }
     }
 }

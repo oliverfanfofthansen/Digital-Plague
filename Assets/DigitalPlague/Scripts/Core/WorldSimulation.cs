@@ -13,6 +13,8 @@ namespace DigitalPlague.Core
         private readonly LocationState[] locations;
         private readonly double[] incomingPressure;
         private readonly double[] nextInfluence;
+        private readonly double[] exposure;
+        private readonly SpreadSettings settings;
 
         public WorldDefinition Definition { get; }
         public IReadOnlyList<LocationState> Locations { get; }
@@ -23,12 +25,14 @@ namespace DigitalPlague.Core
         public double InfluenceFraction => TotalInfluencedDevices / TotalDevices;
         public int ActiveLocations { get; private set; }
 
-        public WorldSimulation(WorldDefinition definition)
+        public WorldSimulation(WorldDefinition definition, SpreadSettings settings = null)
         {
             Definition = definition ?? throw new ArgumentNullException(nameof(definition));
+            this.settings = (settings ?? new SpreadSettings()).Snapshot();
             locations = new LocationState[definition.Locations.Count];
             incomingPressure = new double[locations.Length];
             nextInfluence = new double[locations.Length];
+            exposure = new double[locations.Length];
             long totalDevices = 0;
             for (int index = 0; index < locations.Length; index++)
             {
@@ -54,6 +58,7 @@ namespace DigitalPlague.Core
             OriginId = null;
             TotalInfluencedDevices = 0;
             ActiveLocations = 0;
+            Array.Clear(exposure, 0, exposure.Length);
             foreach (LocationState location in locations) location.InfluencedDevices = 0;
         }
 
@@ -62,7 +67,7 @@ namespace DigitalPlague.Core
             LocationState origin = GetLocation(originId); // Validate before resetting.
             Reset();
             OriginId = originId;
-            origin.InfluencedDevices = Math.Max(1, origin.Data.TotalDevices * 0.008);
+            origin.InfluencedDevices = Math.Max(1, origin.Data.TotalDevices * settings.InitialInfluenceFraction);
             HasStarted = true;
             UpdateTotals();
         }
@@ -87,11 +92,24 @@ namespace DigitalPlague.Core
                 LocationState location = locations[index];
                 RegionData data = location.Data;
                 double fraction = location.InfluenceFraction;
-                double susceptibility = (0.4 + data.Connectivity) * (1 - 0.75 * data.SecurityLevel);
-                double localGrowth = fraction * 0.055 * susceptibility;
-                double transferredInfluence = incomingPressure[index] * 0.0008 * susceptibility;
-                double change = (localGrowth + transferredInfluence) * (1 - fraction) * deltaSeconds;
-                nextInfluence[index] = Math.Min(1, fraction + change) * data.TotalDevices;
+                double susceptibility = (settings.ConnectivityBaseline + data.Connectivity) *
+                    (1 - settings.SecurityResistance * data.SecurityLevel);
+                if (fraction == 0)
+                {
+                    // Exposure is not influence. An untouched country stays clear until
+                    // it receives enough pressure, then starts with one small seed.
+                    exposure[index] += incomingPressure[index] * settings.TransmissionRatePerSecond *
+                        susceptibility * deltaSeconds;
+                    nextInfluence[index] = exposure[index] >= settings.ExposureToSeed
+                        ? Math.Max(1, data.TotalDevices * settings.NewLocationInfluenceFraction) : 0;
+                    continue;
+                }
+
+                // Exact solution of dp/dt = r*p*(1-p). Bounded and stable even for
+                // large time steps; all locations still read the previous tick's state.
+                double decay = Math.Exp(-settings.GrowthRatePerSecond * susceptibility * deltaSeconds);
+                double nextFraction = fraction / (fraction + (1 - fraction) * decay);
+                nextInfluence[index] = Math.Min(1, nextFraction) * data.TotalDevices;
             }
 
             for (int index = 0; index < locations.Length; index++)
