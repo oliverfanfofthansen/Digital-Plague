@@ -1,0 +1,41 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="SimulationHud.uss" />
+    <ui:VisualElement class="screen">
+        <ui:ScrollView class="page-scroll">
+            <ui:VisualElement class="dashboard">
+                <ui:Label text="DIGITAL PLAGUE" class="title" />
+                <ui:Label text="Simulation foundation" class="subtitle" />
+                <ui:VisualElement class="status-row">
+                    <ui:VisualElement class="status-card time-card">
+                        <ui:Label text="ELAPSED SIMULATION TIME" class="eyebrow" />
+                        <ui:Label name="elapsed-label" text="Day 001  00:00:00" class="time-value" />
+                        <ui:Label name="tick-label" class="muted" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="status-card speed-card">
+                        <ui:Label text="SIMULATION SPEED" class="eyebrow" />
+                        <ui:Label name="speed-label" text="1x" class="speed-value" />
+                        <ui:Label name="state-label" text="Simulation running" class="muted" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement class="speed-controls">
+                    <ui:Button name="pause-button" text="Pause" />
+                    <ui:Button name="normal-button" text="1x" />
+                    <ui:Button name="double-button" text="2x" />
+                    <ui:Button name="fast-button" text="5x" />
+                </ui:VisualElement>
+                <ui:VisualElement class="regions-panel">
+                    <ui:Label text="Fictional regions" class="section-title" />
+                    <ui:Label text="Initial region properties / placeholder values" class="muted region-description" />
+                    <ui:VisualElement class="region-row table-header">
+                        <ui:Label text="REGION" class="region-cell region-name" />
+                        <ui:Label text="DEVICES" class="region-cell numeric-cell" />
+                        <ui:Label text="CONNECTIVITY" class="region-cell numeric-cell" />
+                        <ui:Label text="SECURITY" class="region-cell numeric-cell" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="region-list" />
+                </ui:VisualElement>
+                <ui:Label text="Region values stay constant at this stage. Only the simulation clock advances." class="muted footer" />
+            </ui:VisualElement>
+        </ui:ScrollView>
+    </ui:VisualElement>
+</ui:UXML>

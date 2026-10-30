@@ -1,0 +1,7 @@
+{
+    "name": "DigitalPlague.EditModeTests",
+    "rootNamespace": "DigitalPlague.Tests",
+    "references": ["DigitalPlague.Core"],
+    "includePlatforms": ["Editor"],
+    "optionalUnityReferences": ["TestAssemblies"]
+}

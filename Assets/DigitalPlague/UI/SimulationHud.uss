@@ -1,0 +1,54 @@
+.screen {
+    flex-grow: 1;
+    background-color: rgb(12, 19, 28);
+    color: rgb(226, 237, 244);
+    font-size: 16px;
+}
+.page-scroll { flex-grow: 1; }
+.dashboard {
+    width: 92%;
+    max-width: 1100px;
+    align-self: center;
+    padding-top: 34px;
+    padding-bottom: 30px;
+}
+.title { font-size: 32px; -unity-font-style: bold; letter-spacing: 3px; }
+.subtitle { color: rgb(134, 158, 176); margin-top: 3px; margin-bottom: 26px; }
+.status-row { flex-direction: row; flex-wrap: wrap; }
+.status-card {
+    background-color: rgb(22, 34, 47);
+    border-radius: 8px;
+    padding: 22px;
+    margin-bottom: 12px;
+}
+.time-card { flex-grow: 2; min-width: 340px; margin-right: 12px; }
+.speed-card { flex-grow: 1; min-width: 200px; }
+.eyebrow { color: rgb(143, 170, 187); font-size: 12px; letter-spacing: 1px; }
+.time-value { font-size: 30px; margin-top: 10px; margin-bottom: 10px; }
+.speed-value { font-size: 30px; color: rgb(87, 222, 187); margin-top: 10px; margin-bottom: 10px; }
+.muted { color: rgb(143, 164, 181); font-size: 14px; white-space: normal; }
+.speed-controls { flex-direction: row; margin-bottom: 24px; }
+.speed-controls Button {
+    min-width: 84px;
+    height: 40px;
+    margin-left: 0;
+    margin-right: 10px;
+    border-width: 1px;
+    border-color: rgb(52, 76, 95);
+    border-radius: 5px;
+    background-color: rgb(24, 39, 53);
+    color: rgb(226, 237, 244);
+    font-size: 16px;
+}
+.speed-controls Button:hover { background-color: rgb(37, 61, 76); }
+.speed-controls Button:focus { border-color: rgb(200, 240, 230); }
+.speed-controls Button.is-selected { background-color: rgb(41, 127, 109); border-color: rgb(87, 222, 187); }
+.regions-panel { background-color: rgb(22, 34, 47); border-radius: 8px; padding: 22px; }
+.section-title { font-size: 21px; -unity-font-style: bold; }
+.region-description { margin-top: 4px; margin-bottom: 18px; }
+.region-row { flex-direction: row; min-height: 48px; align-items: center; border-bottom-width: 1px; border-bottom-color: rgb(40, 57, 72); }
+.region-cell { width: 23%; padding-left: 8px; padding-right: 8px; margin-left: 0; margin-right: 0; }
+.region-name { width: 31%; -unity-font-style: bold; }
+.numeric-cell { -unity-text-align: middle-right; }
+.table-header { min-height: 36px; color: rgb(143, 170, 187); font-size: 11px; }
+.footer { margin-top: 18px; }

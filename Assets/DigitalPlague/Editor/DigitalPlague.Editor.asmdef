@@ -1,0 +1,6 @@
+{
+    "name": "DigitalPlague.Editor",
+    "rootNamespace": "DigitalPlague.Editor",
+    "references": ["DigitalPlague.Runtime"],
+    "includePlatforms": ["Editor"]
+}

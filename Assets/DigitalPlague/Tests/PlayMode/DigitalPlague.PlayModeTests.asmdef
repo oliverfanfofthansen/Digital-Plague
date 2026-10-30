@@ -1,0 +1,6 @@
+{
+    "name": "DigitalPlague.PlayModeTests",
+    "rootNamespace": "DigitalPlague.Tests",
+    "references": ["DigitalPlague.Core", "DigitalPlague.Runtime"],
+    "optionalUnityReferences": ["TestAssemblies"]
+}

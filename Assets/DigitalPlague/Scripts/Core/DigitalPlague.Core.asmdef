@@ -1,0 +1,5 @@
+{
+    "name": "DigitalPlague.Core",
+    "rootNamespace": "DigitalPlague.Core",
+    "noEngineReferences": true
+}
