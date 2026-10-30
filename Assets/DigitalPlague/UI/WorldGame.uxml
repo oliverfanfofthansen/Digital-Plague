@@ -1,0 +1,107 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="WorldGame.uss" />
+    <ui:VisualElement name="world-root" class="world-root">
+        <ui:VisualElement name="main-menu" class="main-menu">
+            <ui:VisualElement name="menu-map-host" class="menu-map-host" picking-mode="Ignore" />
+            <ui:VisualElement class="menu-shade" picking-mode="Ignore" />
+            <ui:Label text="DP / GLOBAL SIGNAL OBSERVATORY" class="menu-topline" />
+            <ui:VisualElement class="menu-content">
+                <ui:Label text="STRATEGY SIMULATION / 0.2" class="eyebrow amber" />
+                <ui:Label text="DIGITAL&#10;PLAGUE" class="menu-title" />
+                <ui:Label text="ONE ORIGIN. A CONNECTED WORLD." class="menu-tagline" />
+                <ui:Label text="Establish a foothold in a fictional digital network.&#10;Choose the origin. Watch the signal propagate." class="menu-description" />
+                <ui:Button name="new-game-button" text="NEW GAME                         &gt;" class="menu-button primary" />
+                <ui:Button name="menu-settings-button" text="SETTINGS" class="menu-button" />
+                <ui:Button name="quit-button" text="QUIT GAME" class="menu-button quiet" />
+            </ui:VisualElement>
+            <ui:Label text="TEN LOCATIONS / FIFTEEN CONNECTIONS / ONE SHARED SIMULATION" class="menu-bottomline" />
+            <ui:Label text="FICTIONAL SYSTEMS ONLY    /    CARTOGRAPHY: NATURAL EARTH" class="menu-credit" />
+        </ui:VisualElement>
+
+        <ui:VisualElement name="game-screen" class="game-screen">
+            <ui:VisualElement class="top-bar">
+                <ui:Label text="DP / DIGITAL PLAGUE" class="game-brand" />
+                <ui:VisualElement class="resource"><ui:Label text="GLOBAL INFLUENCE" class="eyebrow" /><ui:Label name="global-influence" text="0.00%" class="resource-value cyan" /></ui:VisualElement>
+                <ui:VisualElement class="resource"><ui:Label text="INFLUENCED DEVICES" class="eyebrow" /><ui:Label name="device-total" text="0" class="resource-value" /></ui:VisualElement>
+                <ui:VisualElement class="resource"><ui:Label text="ACTIVE LOCATIONS" class="eyebrow" /><ui:Label name="active-total" text="0 / 10" class="resource-value" /></ui:VisualElement>
+                <ui:VisualElement class="top-spacer" />
+                <ui:Button name="game-settings-button" text="SETTINGS" class="top-button" />
+                <ui:Button name="main-menu-button" text="MAIN MENU" class="top-button" />
+            </ui:VisualElement>
+
+            <ui:VisualElement class="game-body">
+                <ui:VisualElement class="map-column">
+                    <ui:VisualElement name="map-host" class="map-host" />
+                    <ui:VisualElement class="map-heading" picking-mode="Ignore">
+                        <ui:Label name="map-phase" text="CHOOSE YOUR ORIGIN" class="map-phase" />
+                        <ui:Label name="map-instruction" text="Select an outlined country or a location marker." class="map-instruction" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="map-legend" picking-mode="Ignore">
+                        <ui:Label text="+ AVAILABLE NODE" class="muted" />
+                        <ui:Label text="O INFLUENCE" class="cyan" />
+                        <ui:Label text="[ ] SELECTED" class="amber" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="map-tools">
+                        <ui:Button name="zoom-out-button" text="−" tooltip="Zoom out" />
+                        <ui:Button name="zoom-in-button" text="+" tooltip="Zoom in" />
+                        <ui:Button name="reset-map-button" text="RESET VIEW" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <ui:VisualElement class="location-panel">
+                    <ui:ScrollView class="location-scroll">
+                        <ui:Label name="selection-caption" text="ORIGIN SELECTION" class="eyebrow amber" />
+                        <ui:Label name="location-name" text="Select a location" class="location-title" />
+                        <ui:Label name="location-coordinates" text="NO NODE SELECTED" class="coordinates" />
+                        <ui:VisualElement class="divider" />
+                        <ui:Label text="FICTIONAL INFRASTRUCTURE" class="eyebrow" />
+                        <ui:VisualElement class="stat-row"><ui:Label text="Device population" /><ui:Label name="location-devices" text="—" class="stat-value" /></ui:VisualElement>
+                        <ui:VisualElement class="stat-row"><ui:Label text="Connectivity" /><ui:Label name="location-connectivity" text="—" class="stat-value cyan" /></ui:VisualElement>
+                        <ui:VisualElement class="meter"><ui:VisualElement name="connectivity-fill" class="meter-fill" /></ui:VisualElement>
+                        <ui:VisualElement class="stat-row"><ui:Label text="Security rating" /><ui:Label name="location-security" text="—" class="stat-value amber" /></ui:VisualElement>
+                        <ui:VisualElement class="meter"><ui:VisualElement name="security-fill" class="meter-fill amber-fill" /></ui:VisualElement>
+                        <ui:Label name="location-tradeoff" text="High connectivity improves reach. High security slows local influence." class="small-copy" />
+                        <ui:VisualElement class="divider" />
+                        <ui:Label text="LOCAL INFLUENCE" class="eyebrow" />
+                        <ui:Label name="location-influence" text="0.00%" class="influence-value cyan" />
+                        <ui:Label name="location-influenced-devices" text="0 influenced devices" class="muted" />
+                        <ui:VisualElement class="divider" />
+                        <ui:Label name="connections-caption" text="NETWORK CONNECTIONS" class="eyebrow" />
+                        <ui:VisualElement name="connected-locations" class="connected-locations" />
+                        <ui:Label name="selection-status" text="Select an origin on the map." class="selection-status amber" />
+                        <ui:Button name="start-game-button" text="START GAME" class="primary start-button" />
+                        <ui:Label text="NETWORK FEED" class="eyebrow feed-heading" />
+                        <ui:Label name="network-feed" text="Awaiting origin selection." class="network-feed" />
+                    </ui:ScrollView>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:VisualElement class="bottom-bar">
+                <ui:Label text="DRAG TO PAN / SCROLL TO ZOOM" class="input-hint" />
+                <ui:VisualElement name="speed-controls" class="speed-controls">
+                    <ui:Button name="pause-button" text="PAUSE" />
+                    <ui:Button name="normal-button" text="1x" />
+                    <ui:Button name="double-button" text="2x" />
+                    <ui:Button name="fast-button" text="5x" />
+                </ui:VisualElement>
+                <ui:Label name="speed-label" text="AWAITING ORIGIN" class="speed-label amber" />
+                <ui:VisualElement class="bottom-spacer" />
+                <ui:Label name="elapsed-label" text="T+ 00:00:00" class="elapsed-label" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:VisualElement name="settings-overlay" class="settings-overlay">
+            <ui:VisualElement class="settings-panel">
+                <ui:Label text="COMMAND PREFERENCES" class="eyebrow amber" />
+                <ui:Label text="Settings" class="settings-title" />
+                <ui:Label text="Simulation pauses while this panel is open." class="small-copy" />
+                <ui:Toggle name="show-routes-toggle" label="Show network connections" />
+                <ui:Toggle name="high-contrast-toggle" label="High contrast cartography" />
+                <ui:Slider name="zoom-sensitivity-slider" label="Zoom sensitivity" low-value="0.5" high-value="1.5" value="1" show-input-field="true" />
+                <ui:Label text="Preferences are saved on this computer." class="small-copy" />
+                <ui:Button name="apply-settings-button" text="APPLY SETTINGS" class="primary" />
+                <ui:Button name="cancel-settings-button" text="CANCEL" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

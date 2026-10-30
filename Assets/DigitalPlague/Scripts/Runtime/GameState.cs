@@ -3,6 +3,8 @@ namespace DigitalPlague
     public enum GameState
     {
         Running,
-        Paused
+        Paused,
+        MainMenu,
+        SelectingStart
     }
 }

@@ -14,9 +14,10 @@ namespace DigitalPlague.Core
         public int TotalDevices { get; }
         public double Connectivity { get; }
         public double SecurityLevel { get; }
+        public GeoCoordinate Coordinates { get; }
 
         public RegionData(string id, string displayName, int totalDevices,
-            double connectivity, double securityLevel)
+            double connectivity, double securityLevel, GeoCoordinate coordinates = default)
         {
             if (string.IsNullOrWhiteSpace(id))
             {
@@ -41,6 +42,7 @@ namespace DigitalPlague.Core
             TotalDevices = totalDevices;
             Connectivity = connectivity;
             SecurityLevel = securityLevel;
+            Coordinates = coordinates;
         }
 
         private static void ValidateNormalized(double value, string parameterName)

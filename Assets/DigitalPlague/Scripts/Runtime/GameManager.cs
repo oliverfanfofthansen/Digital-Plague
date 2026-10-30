@@ -7,7 +7,7 @@ namespace DigitalPlague
 {
     /// <summary>
     /// Scene composition root: owns the clock and regions and drives simulation.
-    /// No UI, global singleton, persistence, or future gameplay systems live here.
+    /// No UI, global singleton, or cross-scene persistence lives here.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class GameManager : MonoBehaviour
@@ -18,12 +18,18 @@ namespace DigitalPlague
         [SerializeField]
         private SimulationSpeed startingSpeed = SimulationSpeed.Normal;
 
+        [SerializeField] private bool startInMainMenu;
+
         public event Action<SimulationTick> SimulationTicked;
         public event Action<GameState> StateChanged;
+        public event Action WorldChanged;
 
         public SimulationClock Clock { get; private set; }
         public IReadOnlyList<RegionData> Regions { get; private set; }
         public GameState State { get; private set; } = GameState.Paused;
+        public WorldSimulation World { get; private set; }
+        public string SelectedLocationId { get; private set; }
+        public LocationState SelectedLocation => SelectedLocationId == null ? null : World.GetLocation(SelectedLocationId);
 
         private void Awake()
         {
@@ -38,11 +44,19 @@ namespace DigitalPlague
                 return;
             }
 
-            Regions = FictionalRegions.Create();
-            Clock = new SimulationClock(tickDurationSeconds, startingSpeed);
+            if (startInMainMenu)
+            {
+                World = new WorldSimulation(WorldLocations.Create());
+                Regions = World.Definition.Locations;
+            }
+            else Regions = FictionalRegions.Create();
+
+            Clock = new SimulationClock(tickDurationSeconds,
+                startInMainMenu ? SimulationSpeed.Paused : startingSpeed);
             Clock.Tick += HandleTick;
             Clock.SpeedChanged += HandleSpeedChanged;
-            State = startingSpeed == SimulationSpeed.Paused ? GameState.Paused : GameState.Running;
+            State = startInMainMenu ? GameState.MainMenu :
+                startingSpeed == SimulationSpeed.Paused ? GameState.Paused : GameState.Running;
         }
 
         private void Update()
@@ -53,23 +67,75 @@ namespace DigitalPlague
         public void SetSimulationSpeed(SimulationSpeed speed)
         {
             Initialize();
+            if (World != null && State != GameState.Running && State != GameState.Paused) return;
             Clock.SetSpeed(speed);
+        }
+
+        public void BeginNewGame()
+        {
+            RequireWorld();
+            SetState(GameState.SelectingStart);
+            Clock.Reset();
+            World.Reset();
+            SelectedLocationId = null;
+            WorldChanged?.Invoke();
+        }
+
+        public void SelectLocation(string id)
+        {
+            RequireWorld();
+            if (State == GameState.MainMenu) return;
+            World.GetLocation(id);
+            SelectedLocationId = id;
+            WorldChanged?.Invoke();
+        }
+
+        public bool StartGame()
+        {
+            RequireWorld();
+            if (State != GameState.SelectingStart || SelectedLocationId == null) return false;
+            Clock.Reset();
+            World.Seed(SelectedLocationId);
+            SetState(GameState.Running);
+            Clock.SetSpeed(SimulationSpeed.Normal);
+            WorldChanged?.Invoke();
+            return true;
+        }
+
+        public void ReturnToMainMenu()
+        {
+            RequireWorld();
+            SetState(GameState.MainMenu);
+            Clock.SetSpeed(SimulationSpeed.Paused);
+            WorldChanged?.Invoke();
+        }
+
+        private void RequireWorld()
+        {
+            Initialize();
+            if (World == null) throw new InvalidOperationException("Use the World Game scene for this command.");
+        }
+
+        private void SetState(GameState state)
+        {
+            if (State == state) return;
+            State = state;
+            StateChanged?.Invoke(State);
         }
 
         private void HandleSpeedChanged(SimulationSpeed speed)
         {
+            if (World != null && (State == GameState.MainMenu || State == GameState.SelectingStart)) return;
             GameState nextState = speed == SimulationSpeed.Paused ? GameState.Paused : GameState.Running;
-            if (State != nextState)
-            {
-                State = nextState;
-                StateChanged?.Invoke(State);
-            }
+            SetState(nextState);
+            WorldChanged?.Invoke();
         }
 
         private void HandleTick(SimulationTick tick)
         {
-            // Future systems can subscribe here and use tick.DeltaSeconds.
+            World?.Advance(tick.DeltaSeconds);
             SimulationTicked?.Invoke(tick);
+            WorldChanged?.Invoke();
         }
 
         private void OnDestroy()

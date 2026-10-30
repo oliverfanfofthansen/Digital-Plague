@@ -43,6 +43,14 @@ namespace DigitalPlague.Core
             SpeedChanged?.Invoke(speed);
         }
 
+        /// <summary>Starts a fresh session without replacing event subscriptions.</summary>
+        public void Reset()
+        {
+            accumulatedSeconds = 0;
+            TickCount = 0;
+            SetSpeed(SimulationSpeed.Paused);
+        }
+
         /// <summary>
         /// Call once per frame with unscaled real seconds. All due ticks are
         /// processed, including after a slow frame; no simulation time is dropped.

@@ -1,71 +1,100 @@
-# Digital Plague
+# Digital Plague — MVP 0.2
 
-A small simulation foundation for a fictional strategy game. Built for the existing Unity **6000.6.0f1** URP project, using only its existing packages and Unity's built-in UI Toolkit.
+A Unity **6000.6.0f1 / URP** strategy-game foundation: main menu, an interactive geographic world map, origin selection, and an abstract influence simulation. All device populations, ratings, network links, and spread rules are fictional game balance. The game does not interact with real networks.
 
-## Run in Unity
+## Launch
 
-1. Open this folder in Unity Hub with **6000.6.0f1** and let Unity import the assets.
-2. Open `Assets/Scenes/DigitalPlagueFoundation.unity`, or choose **Digital Plague > Open Foundation Scene**. The menu creates the scene and panel settings only if missing.
-3. Press **Play**. The dashboard starts at **1x**, with four fictional regions and a clock beginning at **Day 001 00:00:00** (zero elapsed time).
-4. Use **Pause**, **1x**, **2x**, and **5x**. The selected button, speed label, elapsed time, and completed tick count show the current simulation state. Click inside the Game view to focus it if needed. In a small Game view, scroll down to see the entire region table.
-5. Exit and re-enter Play mode to start a fresh simulation.
+1. Open this project in Unity Hub using **6000.6.0f1** and allow imports to finish.
+2. Choose **Digital Plague > Open World Game**, or open `Assets/Scenes/DigitalPlagueWorld.unity`.
+3. Press **Play**. The main menu contains **New Game**, **Settings**, and **Quit Game**.
+4. Choose **New Game**. Click one of the ten location markers or its outlined country. Its infrastructure statistics and connections appear on the right.
+5. Choose **Start Game**. The selected location begins with **0.8% local influence**; every other location starts clear. The clock begins at **1x**.
+6. Use **Pause / 1x / 2x / 5x** at the bottom. Cyan markers, expanding rings, country fills, routes, and live totals show influence. Amber identifies the selected country and the origin marker.
 
-The scene is already wired: `GameManager` owns the simulation; `Simulation UI` contains a `UIDocument` and `SimulationHud` with an explicit manager reference. There is no manual reference assignment required. Select `GameManager` to set **Tick Duration Seconds** (default **1**) and **Starting Speed** before entering Play mode. Change these settings outside Play mode; the clock is constructed once per session.
+**No manual component assignment or package installation is required.** The scene, panel settings, country geometry, and reusable `WorldGame.prefab` are included and wired. The Editor menu recreates missing scene/prefab assets without overwriting existing ones. It puts the World scene first in the build scene list while retaining the original SampleScene. A standalone build will launch into the main menu; a standalone player build has not been produced as part of this milestone.
 
-The original `SampleScene`, input settings, URP assets, time settings, packages, and build scene list are preserved. To make a standalone demo, explicitly add `DigitalPlagueFoundation` to **File > Build Profiles > Scene List** and put it first for that build.
+Unity remembers the last open scene. If it reopens the old foundation scene, use the World Game menu above. The original `DigitalPlagueFoundation.unity` remains available through **Digital Plague > Open Foundation Scene** for the original four-region clock demo and its regression tests. Its original documentation is retained in `Docs/Foundation-0.1.md`.
 
-## Structure and responsibilities
+## Controls and settings
+
+| Action | Control |
+| --- | --- |
+| Select / inspect | Click a playable country shape or circular marker |
+| Inspect a connected location | Click its name in the side panel |
+| Pan | Left-button drag on the map background |
+| Zoom | Mouse wheel, or **+ / −** at the lower right of the map |
+| Restore world view | **Reset View** |
+| Change simulation speed | **Pause / 1x / 2x / 5x** |
+| Open / cancel settings | **Settings**, or **Escape** |
+| Start a fresh session | **Main Menu > New Game** |
+| Quit | **Quit Game** on the main menu; stops Play mode in the Editor |
+
+Click inside the Game view to focus it if Unity consumes the first click. For a larger view, right-click the **Game** tab and choose **Maximize**. The interface scales from a 1600×900 reference resolution. The map viewport occupies more than 65% of the gameplay screen; the narrow side panel scrolls on short windows.
+
+Settings control **network route visibility**, **cartographic contrast**, and **zoom sensitivity**. Apply saves these presentation preferences locally using Unity `PlayerPrefs`. Cancel discards edits. Opening settings pauses the simulation; closing restores the previous speed, including an existing pause. No save-game data is stored.
+
+## Gameplay model
+
+The existing `SimulationClock` still accumulates unscaled real time and emits fixed one-second simulation ticks. Speed changes affect how many ticks occur per real second. Pausing preserves an unfinished tick and ignores time spent paused. The simulation never changes Unity's `Time.timeScale` or physics timestep.
+
+`WorldSimulation` reads every location's previous influence, computes incoming pressure along the 15 undirected fictional links, and then applies all changes together. Higher connectivity increases growth/transfer; higher security reduces susceptibility. Growth slows as local influence approaches 100%. An isolated location cannot receive influence, and new influence cannot jump multiple connections in one tick. There is no randomness: the same initial world and sequence of fixed ticks produce the same outcome regardless of rendering frame rate or speed.
+
+The top bar shows simulation counters: population-weighted global influence, influenced devices, and active locations. A location becomes active once at least one fictional device is influenced. The side panel's network feed records the latest three locations reached. Reaching every location leaves the sandbox running; no victory/defeat system is implemented.
+
+## Code and assets
 
 ```text
 Assets/DigitalPlague/
-  Scripts/Core/       Engine-independent clock, tick, speed, and region data
-  Scripts/Runtime/    Unity GameManager and GameState
-    UI/              SimulationHud presentation and input binding
-  UI/                UXML layout, USS styling, theme, and panel settings
-  Editor/            Non-destructive scene creation/open menu
-  Tests/EditMode/    Fixed timing and region-data validation
-  Tests/PlayMode/    Wired scene, UI controls, pause, and Unity lifecycle checks
-Assets/Scenes/
-  DigitalPlagueFoundation.unity
+  Scripts/Core/                 No Unity engine or UI references
+    SimulationClock.cs          Existing fixed-step clock, plus session Reset()
+    RegionData.cs               Immutable properties, stable ID, geographic anchor
+    GeoCoordinate.cs            Latitude/longitude for map and future globe
+    WorldLocations.cs           Ten locations and fifteen fictional links
+    WorldDefinition.cs          Validated immutable location/link collection
+    LocationState.cs            Mutable influence, separate from region properties
+    WorldSimulation.cs          Deterministic abstract spread model
+  Scripts/Runtime/
+    GameManager.cs              Flow, selection, clock driving, tick integration
+    GameState.cs                MainMenu, SelectingStart, Running, Paused
+    UI/WorldInterface.cs        Screens, commands, statistics, settings
+    UI/WorldMapElement.cs       Vector map, picking, zoom/pan, overlays
+    UI/WorldMapGeometry.cs      Presentation-only polygon loading
+    UI/GamePreferences.cs      Local presentation preferences
+  UI/WorldGame.uxml + .uss       Compact tactical command interface
+  UI/WorldPanelSettings.asset   Runtime UI Toolkit panel
+  Data/WorldCountries.json      Natural Earth polygons (177 shapes)
+  Data/SOURCES.md               Source, hash, public-domain terms
+  Prefabs/WorldGame.prefab       Reusable manager + UI composition
+  Editor/WorldSceneBuilder.cs   Non-destructive setup/open command
+  Tests/                        EditMode and PlayMode coverage
+Assets/Scenes/DigitalPlagueWorld.unity
+Tools/ImportWorldMap.ps1         Reproducible polygon conversion
 ```
 
-`DigitalPlague.Core` has **no Unity engine references**. It can be tested without a scene and has no knowledge of UI, cameras, maps, or globes. `DigitalPlague.Runtime` references the core. The HUD reads the manager's data and issues speed commands; it never advances simulation time or mutates regions. Editor helpers and tests compile into separate assemblies and are excluded from normal player code.
+The old foundation UI and fictional region factory are retained for the original demo scene. `GameManager` uses the serialized **Start In Main Menu** option in the new prefab to choose the world flow; the legacy scene retains its original behavior. There is no global singleton or cross-scene persistent manager.
 
-`GameManager` owns a clock and a read-only region collection. `GameState` is `Running` or `Paused`; speed is a separate setting. `StateChanged` signals transitions between those states. Initialization is idempotent and does not rely on another component's `Awake` order. No static singleton or cross-scene persistence is introduced.
+To expand the world, add a `RegionData` entry and `NetworkLink` entries in `WorldLocations.Create()`. Use the matching Natural Earth country code as its ID so the map can highlight and pick its polygon. Its `GeoCoordinate` sets the marker anchor. Every view reads the same `LocationState`; no simulation state lives in a marker or polygon. A future globe can render the same IDs, coordinates, graph, and influence values.
 
-## Timing
+Tune the seed fraction and growth/transfer constants in `WorldSimulation` for game balance. The UI reads these results through `GameManager`; new gameplay rules belong in the core. Slow frames catch up all due ticks, without a work budget at this small scale.
 
-Each `Update`, the manager supplies `Time.unscaledDeltaTime` to `SimulationClock.Advance`. The clock accumulates `real seconds × speed multiplier` and emits a `SimulationTick` for **each complete fixed interval**. The default interval is one simulated second, giving 1, 2, or 5 ticks per real second at the respective speeds.
+## Verification
 
-Every tick carries its sequential number, constant `DeltaSeconds`, and completed `ElapsedSeconds`. Elapsed time is calculated from completed ticks, so the UI moves in fixed steps. Pause preserves a partial tick, discards time spent paused, and leaves the UI responsive. Changing speed preserves accumulated simulation time. The clock never sets `Time.timeScale` or `Time.fixedDeltaTime`, and does not use physics `FixedUpdate`.
+Validated in the Unity **6000.6.0f1 Editor** on 2026-10-30: **39 EditMode tests and 5 PlayMode tests passed**. Manual Play-mode checks confirmed the main menu, country-shape selection, starting the simulation, live spread/inspection, 5x speed, wheel zoom, drag pan, settings pause, and Quit stopping Play mode. This verification does not include a standalone executable build.
 
-Slow frames process all due ticks without dropping time. This simple foundation has no catch-up budget; if future per-tick work becomes expensive, add a measured work budget that retains pending time. There is no background/offline progression or save/load behavior. Normal focus/background behavior follows the existing project settings.
+Open **Window > General > Test Runner**, then run **EditMode** and **PlayMode**. Existing clock and foundation-scene tests are retained. Added tests cover single-origin seeding, simultaneous graph updates, isolated nodes, connectivity/security effects, equal results across speeds/frame partitions, reset, geographic validation, the complete menu/start/inspection/restart flow, settings, and map zoom/pan/reset. The map-layout test checks that its viewport exceeds 65% of the screen.
 
-## Placeholder regions
+Manual acceptance check:
 
-| Stable ID | Region | Devices | Connectivity | Security |
-| --- | --- | ---: | ---: | ---: |
-| aurora-grid | Aurora Grid | 1,250,000 | 82% | 65% |
-| neon-coast | Neon Coast | 2,400,000 | 95% | 45% |
-| cinder-reach | Cinder Reach | 780,000 | 58% | 80% |
-| echo-isles | Echo Isles | 460,000 | 40% | 35% |
+1. Main menu appears; Settings opens, Apply/Cancel work, and Quit exits the player or stops Editor Play mode.
+2. New Game shows recognizable continents and country outlines. Time stays at zero while selecting an origin; Start Game is disabled until selection.
+3. Select Brazil, start, and watch its connected locations receive influence. Inspect Japan while time continues. Try a higher-security origin in a fresh session and compare local growth.
+4. Change between 1x, 2x, 5x, and Pause. Influence totals and elapsed time must freeze while paused.
+5. Scroll to zoom, drag to pan, and Reset View. These controls must not change simulation state.
+6. Open settings during 2x; it pauses. Apply or Cancel restores 2x. Route visibility, contrast, and sensitivity affect the actual map.
+7. Main Menu > New Game clears previous influence, selection, elapsed time, and the network feed.
 
-Edit initial values in `FictionalRegions.Create()`. `RegionData` validates identity, nonnegative device counts, and normalized 0..1 connectivity/security values. Its properties are immutable and its collection is read-only. These values deliberately stay constant: no virus spread, resource, detection, defense, event, or upgrade systems have been implemented. No globe or map is included in this first increment. Stable region IDs let both future views refer to the same data.
+## Scope
 
-Future simulation systems can subscribe to `GameManager.SimulationTicked` and use `tick.DeltaSeconds`, unsubscribing when disabled/destroyed. Keep their logic in the core and let the manager compose and invoke them. Add mutable region simulation state alongside the initial region properties when it is needed; views should continue reading shared data rather than owning simulation state.
+This is a small playable simulation milestone. It includes no 3D globe, advanced evolution/upgrade tree, random event engine, real cyber mechanics, save/load, offline progression, or win/lose condition. There are ten playable locations; the remaining polygons provide geographic context. No packages or external runtime dependencies were added. URP, input, physics/time, and quality configurations were retained; only the build scene list was intentionally updated to launch the new game.
 
-## Test in Unity
-
-Open **Window > General > Test Runner**. Run **EditMode**, then **PlayMode** tests. EditMode checks different frame rates, all speeds, irregular/slow frames, partial ticks, pause/resume, speed transitions, fixed tick payloads, invalid inputs, and region IDs/validation. PlayMode loads the dedicated foundation scene directly, so it need not be added to the build scene list. It exercises the actual UI controls, verifies that pause freezes the display, checks progression with Unity's global time scale at zero, and checks HUD re-enabling.
-
-Validated in Unity 6000.6.0f1: **30 EditMode tests and 2 PlayMode tests passed**. The live dashboard, mouse speed controls, pause, and all four region rows were also checked in the editor.
-
-For a manual smoke test:
-
-1. At 1x, observe approximately 10 elapsed simulation seconds in 10 real seconds.
-2. At 2x and 5x, observe approximately 20 and 50 simulation seconds in 10 real seconds. Allow a one-tick boundary difference when timing by hand.
-3. Pause for several seconds. Elapsed time and ticks must stay fixed; resume with any speed button.
-4. Confirm all four rows match the table above and remain constant.
-5. Check the Console for errors. Stop and restart Play mode and confirm time/regions initialize cleanly.
-
-Unity references: [unscaledDeltaTime](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Time-unscaledDeltaTime.html), [runtime UI Toolkit](https://docs.unity3d.com/6000.0/Documentation/Manual/UIE-get-started-with-runtime-ui.html).
+Map source and terms: [Natural Earth](https://www.naturalearthdata.com/about/terms-of-use/). Unity reference: [UI Toolkit vector rendering](https://docs.unity.com/en-us/engine/6000.6/manual/uitoolkits/uielements/uie-ui-renderer/uie-generate-2d-visual-content).
